@@ -50,22 +50,41 @@ jobs:
         BRANCH="main"
         DIR="speedtest"
         API_URL="https://api.github.com/repos/$REPO/contents/$DIR?ref=$BRANCH"
-    
+        
         # 打印 API_URL 以调试
         echo "API URL: $API_URL"
-    
-        # 从 GitHub API 获取文件列表并下载文件
-        response=$(curl -s $API_URL)
         
-        # 打印响应以调试
-        echo "API response: $response"
+        # 递归下载目录及其子目录
+        download_directory() {
+          local dir="$1"
+          local api_url="https://api.github.com/repos/$REPO/contents/$dir?ref=$BRANCH"
     
-        # 解析 JSON 响应并下载文件
-        echo "$response" | jq -r '.[] | select(.type=="file") | .download_url' | while read -r file_url; do
-          file_name=$(basename "$file_url")
-          echo "Downloading $file_name from $file_url"
-          curl -L -o "speedtest/$file_name" "$file_url"
-        done
+          # 从 GitHub API 获取目录内容
+          response=$(curl -s "$api_url")
+          
+          # 打印响应以调试
+          echo "API response for $dir: $response"
+        
+          # 解析 JSON 响应并下载文件
+          echo "$response" | jq -r '.[] | select(.type=="file") | .download_url' | while read -r file_url; do
+            file_name=$(basename "$file_url")
+            echo "Downloading file $file_name from $file_url"
+            curl -L -o "$dir/$file_name" "$file_url"
+          done
+        
+          # 处理子目录
+          echo "$response" | jq -r '.[] | select(.type=="dir") | .path' | while read -r subdir; do
+            mkdir -p "$subdir"
+            echo "Processing subdirectory $subdir"
+            download_directory "$subdir"
+          done
+        }
+    
+        # 创建根目录
+        mkdir -p "$DIR"
+    
+        # 下载目录及其所有内容
+        download_directory "$DIR"
     
     - name: Commit and push speedtest changes
       run: |
@@ -73,9 +92,10 @@ jobs:
         git status
         git commit -m "Update speedtest files" || echo "No changes to commit"
         git pull origin main --rebase
-        git push  
+        git push
       env:
-        PAT: ${{ secrets.GITHUBS_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUBS_TOKEN }}
+
       
     - name: Run Multitest Script
       #working-directory: iptv/speedtest
