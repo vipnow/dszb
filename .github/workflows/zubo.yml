@@ -46,7 +46,7 @@ jobs:
     - name: Download files to speedtest directory
       run: |
         # 定义变量
-        REPO="${{ secrets.ORIGIN_NAME }}/wods"
+        REPO="${{ secrets.ORIGIN_NAME }}/dszb"
         BRANCH="main"
         DIR="speedtest"
         API_URL="https://api.github.com/repos/$REPO/contents/$DIR?ref=$BRANCH"
