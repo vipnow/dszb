@@ -109,8 +109,12 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add .
-        git commit -m "Update results"
+        git commit -m "Update results" || echo "No changes to commit"
+        git pull --rebase
         git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUBS_TOKEN }}
+
 
     - name: Trigger Project B Workflow
       env:
