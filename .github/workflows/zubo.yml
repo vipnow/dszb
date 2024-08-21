@@ -19,6 +19,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y yt-dlp sed nmap
 
+    - name: Delete speedtest Folder
+      run: |
+        if [ -d "speedtest/" ]; then
+          rm -rf speedtest/
+          git rm -r --cached speedtest/
+          git commit -m "Delete speedtest folder" || echo "No changes to commit"
+          git push
+        else
+          echo "speedtest/ directory not found, skipping deletion"
+        fi
+      env:
+        PAT: ${{ secrets.GITHUBS_TOKEN }}
+    
     - name: Create speedtest directory
       run: mkdir -p speedtest
 
