@@ -50,21 +50,30 @@ jobs:
         BRANCH="main"
         DIR="speedtest"
         API_URL="https://api.github.com/repos/$REPO/contents/$DIR?ref=$BRANCH"
-
-        # 从 GitHub API 获取文件列表
-        curl -s $API_URL | jq -r '.[] | select(.type=="file") | .download_url' | while read -r file_url; do
-          # 提取文件名并下载
+    
+        # 打印 API_URL 以调试
+        echo "API URL: $API_URL"
+    
+        # 从 GitHub API 获取文件列表并下载文件
+        response=$(curl -s $API_URL)
+        
+        # 打印响应以调试
+        echo "API response: $response"
+    
+        # 解析 JSON 响应并下载文件
+        echo "$response" | jq -r '.[] | select(.type=="file") | .download_url' | while read -r file_url; do
           file_name=$(basename "$file_url")
+          echo "Downloading $file_name from $file_url"
           curl -L -o "speedtest/$file_name" "$file_url"
         done
-
+    
     - name: Commit and push speedtest changes
       run: |
-        git add speedtest/*
+        git add speedtest
         git status
         git commit -m "Update speedtest files" || echo "No changes to commit"
         git pull origin main --rebase
-        git push
+        git push  
       env:
         PAT: ${{ secrets.GITHUBS_TOKEN }}
       
