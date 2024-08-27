@@ -49,21 +49,28 @@ jobs:
         REPO="${{ secrets.ORIGIN_NAME }}/dszb"
         BRANCH="main"
         DIR="speedtest"
-        API_URL="https://api.github.com/repos/$REPO/contents/$DIR?ref=$BRANCH"
+        #API_URL="https://api.github.com/repos/$REPO/contents/$DIR?ref=$BRANCH"
+        TOKEN="${{ secrets.GITHUBS_TOKEN }}" # 使用 GitHub 令牌以增加速率限制
         
         # 打印 API_URL 以调试
-        echo "API URL: $API_URL"
+        #echo "API URL: $API_URL"
         
         # 递归下载目录及其子目录
         download_directory() {
           local dir="$1"
           local api_url="https://api.github.com/repos/$REPO/contents/$dir?ref=$BRANCH"
-    
+      
           # 从 GitHub API 获取目录内容
-          response=$(curl -s "$api_url")
+          response=$(curl -s -H "Authorization: token $TOKEN" "$api_url")
           
           # 打印响应以调试
           echo "API response for $dir: $response"
+        
+          # 检查是否返回错误信息
+          if echo "$response" | jq -e '.message' > /dev/null; then
+            echo "Error: $(echo "$response" | jq -r '.message')"
+            exit 1
+          fi
         
           # 解析 JSON 响应并下载文件
           echo "$response" | jq -r '.[] | select(.type=="file") | .download_url' | while read -r file_url; do
@@ -79,12 +86,13 @@ jobs:
             download_directory "$subdir"
           done
         }
-    
+      
         # 创建根目录
         mkdir -p "$DIR"
-    
+      
         # 下载目录及其所有内容
         download_directory "$DIR"
+
     
     - name: Commit and push speedtest changes
       run: |
