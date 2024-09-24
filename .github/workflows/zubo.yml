@@ -1,7 +1,7 @@
 name: Daily Job
 
 on:
-  schedule:
+  #schedule:
     #- cron: "30 2 * * *"  #11:00  10:30
     #- cron: "30 11 * * *"   #20:00  19:30
   workflow_dispatch:
