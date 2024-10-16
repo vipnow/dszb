@@ -1,2 +1,0 @@
-1282k  buffaloft.ignorelist.com:8888
-1042k  123.113.106.229:4022
